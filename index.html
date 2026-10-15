@@ -43,6 +43,7 @@ const TITLES=['Novato','Aprendiz','Explorador','Estudiante','Aplicado','Experto'
 const RULES={manual:'Manual (la concedes tú)',tasks:'Tareas corregidas ≥',ontime:'Entregas puntuales ≥',top:'Notas de 9 o más (cantidad) ≥',xp:'Puntos totales ≥'};
 const S={me:null,cfg:{name:'Clases Particulares',accent:'#6366f1',xp_on_time:10,level_step:100},view:'home',sid:null,tab:'tasks',D:null,list:[]};
 const CFG=window.CFG;let sb,FM={};
+if(CFG){try{CFG.SUPABASE_URL=new URL(/^https?:/i.test(CFG.SUPABASE_URL.trim())?CFG.SUPABASE_URL.trim():'https://'+CFG.SUPABASE_URL.trim()).origin}catch{}CFG.SUPABASE_KEY=String(CFG.SUPABASE_KEY||'').trim()}
 const ck=r=>{if(r.error)throw r.error;return r.data};
 const tr=m=>/already registered/i.test(m)?'Ese usuario ya existe':/duplicate key/i.test(m)?'Ya existe (usuario repetido)':/exceeded the maximum/i.test(m)?'El archivo es demasiado grande':m;
 const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=tr(String(m));document.body.append(t);setTimeout(()=>t.remove(),3500)};
