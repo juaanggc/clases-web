@@ -1,0 +1,272 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clases Particulares</title>
+<style>
+:root{--ac:#6366f1;--bg:#f4f5fb;--card:#fff;--tx:#1e2033;--mu:#6b7090;--bd:#e5e7f2;--ok:#16a34a;--warn:#d97706;--bad:#ef4444;--info:#2563eb}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1120;--card:#181a2e;--tx:#eceefc;--mu:#9a9fc4;--bd:#2a2d4a}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+h1{margin:0 0 16px;font-size:26px}h3{margin:28px 0 12px}h4{margin:0;font-size:17px}p{white-space:pre-wrap;margin:8px 0}
+.mu{color:var(--mu);font-size:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.end{justify-content:flex-end;margin-top:16px}
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{background:var(--card);border-right:1px solid var(--bd);padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.brand{font-weight:800;font-size:18px;padding:4px 10px 16px;display:flex;gap:8px;align-items:center}
+.nav{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;color:var(--tx);cursor:pointer;border:0;background:none;font:inherit;text-align:left;width:100%}
+.nav:hover{background:color-mix(in srgb,var(--ac) 8%,transparent)}.nav.on{background:color-mix(in srgb,var(--ac) 15%,transparent);color:var(--ac);font-weight:700}
+.me{margin-top:auto;border-top:1px solid var(--bd);padding-top:12px}
+main{padding:28px;max-width:1100px;width:100%}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(20,20,60,.04)}
+.click{cursor:pointer;transition:.15s}.click:hover{transform:translateY(-2px);border-color:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}.grid .card{margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{display:flex;gap:12px;align-items:center}.stat b{font-size:26px;display:block;line-height:1}.stat .ic{font-size:26px;background:color-mix(in srgb,var(--ac) 12%,transparent);border-radius:12px;width:48px;height:48px;display:grid;place-items:center}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--bd)}.btn.sm{padding:5px 11px;font-size:13px}.btn.bad{background:var(--bad)}.wide{width:100%;margin-top:16px}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--mu) 15%,transparent);color:var(--mu);white-space:nowrap}
+.chip.ok{background:#16a34a22;color:var(--ok)}.chip.bad{background:#ef444422;color:var(--bad)}.chip.warn{background:#f59e0b22;color:var(--warn)}.chip.info{background:#2563eb22;color:var(--info)}
+.av{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;flex:none}
+.bar{height:10px;background:color-mix(in srgb,var(--ac) 15%,transparent);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),#ec4899);border-radius:9px;transition:width .6s}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.hero>div:nth-child(2){flex:1;min-width:220px}
+.tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}.tabs button{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;border-radius:99px;font:inherit;cursor:pointer}.tabs .on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sub,.fb{border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px}.sub{background:color-mix(in srgb,var(--info) 8%,transparent)}.fb{background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.file{display:inline-flex;gap:6px;align-items:center;background:color-mix(in srgb,var(--ac) 8%,transparent);border-radius:10px;padding:4px 10px;margin:4px 6px 0 0;font-size:13px}.file a{color:var(--tx);text-decoration:none}.file button{border:0;background:none;cursor:pointer;color:var(--bad)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.badge{text-align:center;padding:16px 10px}.badge .i{font-size:36px}.badge.off{opacity:.35;filter:grayscale(1)}
+.log{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}.pos{color:var(--ok);font-weight:700}.neg{color:var(--bad);font-weight:700}
+label{display:block;font-weight:600;font-size:13px;margin:12px 0 4px}input,textarea,select{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}textarea{min-height:80px}input[type=color]{padding:2px;height:40px}
+dialog{border:0;border-radius:18px;padding:22px;width:min(480px,94vw);background:var(--card);color:var(--tx);box-shadow:0 20px 60px #0006}dialog::backdrop{background:#0008}dialog h3{margin-top:0}
+.login{min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,color-mix(in srgb,var(--ac) 35%,transparent),transparent 50%),var(--bg)}.login .card{width:min(380px,92vw);padding:30px;text-align:center}.login label{text-align:left}.logo{font-size:48px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e2033;color:#fff;padding:10px 18px;border-radius:12px;z-index:99}
+@media(max-width:800px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px}.brand{padding:4px}.nav{width:auto;padding:8px 10px}.me{margin:0 0 0 auto;border:0;padding:0}main{padding:16px}}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script></head><body><div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=d=>d?new Date(d).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+const loc=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)};
+const TITLES=['Novato','Aprendiz','Explorador','Estudiante','Aplicado','Experto','Maestro','Leyenda'];
+const RULES={manual:'Manual (la concedes tú)',tasks:'Tareas corregidas ≥',ontime:'Entregas puntuales ≥',top:'Notas de 9 o más (cantidad) ≥',xp:'Puntos totales ≥'};
+const S={me:null,cfg:{name:'Clases Particulares',accent:'#6366f1',xp_on_time:10,level_step:100},view:'home',sid:null,tab:'tasks',D:null,list:[]};
+const CFG=window.CFG;let sb,FM={};
+const ck=r=>{if(r.error)throw r.error;return r.data};
+const tr=m=>/already registered/i.test(m)?'Ese usuario ya existe':/duplicate key/i.test(m)?'Ya existe (usuario repetido)':/exceeded the maximum/i.test(m)?'El archivo es demasiado grande':m;
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=tr(String(m));document.body.append(t);setTimeout(()=>t.remove(),3500)};
+const applyCfg=()=>{document.documentElement.style.setProperty('--ac',S.cfg.accent);document.title=S.cfg.name};
+const toEmail=u=>{u=String(u).trim().toLowerCase();if(u.includes('@'))return u;const[l,d]=CFG.ALIAS_EMAIL.split('@');return `${l}+${u}@${d}`};
+const lvl=xp=>Math.floor(Math.max(0,xp)/S.cfg.level_step)+1;
+const SID=()=>S.me.role==='teacher'?S.sid:S.me.id;
+function modal(title,body,ok,label='Guardar'){
+  const d=document.createElement('dialog');d.innerHTML=`<form><h3>${title}</h3>${body}<div class="row end"><button type="button" class="btn ghost" data-x>Cancelar</button><button class="btn">${label}</button></div></form>`;
+  document.body.append(d);d.showModal();d.querySelector('[data-x]').onclick=()=>d.remove();d.addEventListener('cancel',()=>d.remove());
+  d.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await ok(new FormData(e.target));d.remove();render()}catch(x){b.disabled=false;toast(x.message)}};
+}
+const go=(view,sid,tab)=>{S.view=view;S.sid=sid??null;S.tab=tab||(S.me.role==='teacher'?'tasks':'home');render()};
+const act=async(fn,msg)=>{try{await fn();msg&&toast(msg);render()}catch(e){toast(e.message)}};
+const ask=(t,fn,msg)=>confirm(t)&&act(fn,msg);
+
+// ---------- Datos ----------
+async function loadCfg(){const rows=ck(await sb.from('settings').select('*'));rows.forEach(r=>S.cfg[r.key]=['name','accent'].includes(r.key)?r.value:+r.value)}
+async function overview(){
+  const[st,ts,ss,xs]=(await Promise.all([sb.from('profiles').select('*').eq('role','student').order('name'),sb.from('tasks').select('id,student_id,title'),sb.from('submissions').select('id,task_id,grade,submitted_at'),sb.from('xp_log').select('student_id,amount')])).map(ck);
+  const tOf=Object.fromEntries(ts.map(t=>[t.id,t]));
+  const students=st.map(u=>{const my=ts.filter(t=>t.student_id===u.id),ms=ss.filter(s=>tOf[s.task_id]?.student_id===u.id),gr=ms.filter(s=>s.grade!=null),xp=xs.filter(x=>x.student_id===u.id).reduce((a,x)=>a+x.amount,0);
+    return{...u,xp,level:lvl(xp),pend:ms.length-gr.length,open:my.length-ms.length,avg:gr.length?gr.reduce((a,s)=>a+s.grade,0)/gr.length:null}});
+  const pending=ss.filter(s=>s.grade==null).sort((a,b)=>a.submitted_at>b.submitted_at?1:-1).map(s=>{const t=tOf[s.task_id],u=st.find(x=>x.id===t.student_id);return{id:s.id,submitted_at:s.submitted_at,title:t.title,name:u.name,sid:u.id}});
+  return{students,pending};
+}
+async function loadData(sid){
+  const[u,fl,ts,lg,bs,sbd]=(await Promise.all([sb.from('profiles').select('*').eq('id',sid).single(),sb.from('files').select('*').eq('student_id',sid).order('created_at',{ascending:false}),sb.from('tasks').select('*').eq('student_id',sid).order('due'),sb.from('xp_log').select('*').eq('student_id',sid).order('created_at',{ascending:false}),sb.from('badges').select('*').order('id'),sb.from('student_badges').select('badge_id').eq('student_id',sid)])).map(ck);
+  const ss=ts.length?ck(await sb.from('submissions').select('*').in('task_id',ts.map(t=>t.id))):[];
+  FM={};fl.forEach(f=>FM[f.id]=f);
+  const of=(k,r)=>fl.filter(f=>f.kind===k&&(r===undefined||f.ref===r)),xp=lg.reduce((a,x)=>a+x.amount,0),earned=new Set(sbd.map(x=>x.badge_id));
+  return{user:u,xp,level:lvl(xp),step:S.cfg.level_step,
+    tasks:ts.map(t=>{const s=ss.find(x=>x.task_id===t.id);return{...t,files:of('task',t.id),sub:s?{...s,files:of('sub',s.id)}:null}}),
+    docs:of('doc'),uploads:of('upload'),log:lg.slice(0,50),badges:bs.map(b=>({...b,earned:earned.has(b.id)}))};
+}
+async function upload(list,sid,kind,ref,note){
+  for(const f of list){if(!f.size)continue;
+    const path=`${sid}/${crypto.randomUUID()}${(f.name.match(/\.[A-Za-z0-9]{1,8}$/)||[''])[0]}`;
+    const u=await sb.storage.from('archivos').upload(path,f);if(u.error)throw u.error;
+    ck(await sb.from('files').insert({student_id:sid,kind,ref:ref||null,name:f.name,path,uploader:S.me.role,note:note||''}));}
+}
+async function dl(id){const f=FM[id],r=await sb.storage.from('archivos').createSignedUrl(f.path,60,{download:f.name});if(r.error)return toast(r.error.message);location.href=r.data.signedUrl}
+async function rmFiles(list){if(!list.length)return;await sb.storage.from('archivos').remove(list.map(f=>f.path));ck(await sb.from('files').delete().in('id',list.map(f=>f.id)))}
+const delFile=id=>ask('¿Eliminar archivo?',()=>rmFiles([FM[id]]));
+async function checkBadges(sid){
+  const ts=ck(await sb.from('tasks').select('id,due').eq('student_id',sid));
+  const subs=ts.length?ck(await sb.from('submissions').select('task_id,grade,submitted_at').in('task_id',ts.map(t=>t.id)).not('grade','is',null)):[];
+  const due=Object.fromEntries(ts.map(t=>[t.id,t.due])),xp=ck(await sb.from('xp_log').select('amount').eq('student_id',sid)).reduce((a,x)=>a+x.amount,0);
+  const m={tasks:subs.length,ontime:subs.filter(s=>new Date(s.submitted_at)<=new Date(due[s.task_id])).length,top:subs.filter(s=>s.grade>=9).length,xp};
+  const ok=ck(await sb.from('badges').select('*')).filter(b=>b.rule!=='manual'&&m[b.rule]>=b.value);
+  if(ok.length)ck(await sb.from('student_badges').upsert(ok.map(b=>({student_id:sid,badge_id:b.id})),{onConflict:'student_id,badge_id',ignoreDuplicates:true}));
+}
+
+// ---------- Arranque / login ----------
+async function boot(){
+  if(!CFG||CFG.SUPABASE_URL.includes('XXXX')){$('#app').innerHTML='<div class="login"><div class="card"><h2>⚙️ Falta configurar</h2><p>Edita <b>config.js</b> con los datos de Supabase (mira LEEME.md).</p></div></div>';return}
+  sb=sb||supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY);
+  try{await loadCfg()}catch(e){}applyCfg();
+  const{data:{session}}=await sb.auth.getSession();if(!session)return loginView();
+  const{data:p}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+  if(!p){await sb.auth.signOut();loginView();return toast('Esta cuenta no tiene acceso')}
+  S.me={...p,email:session.user.email};S.view='home';S.tab=p.role==='teacher'?'tasks':'home';render();
+}
+async function loginView(){
+  $('#app').innerHTML=`<div class="login"><form class="card" onsubmit="doLogin(event)"><div class="logo">🎓</div><h2>${esc(S.cfg.name)}</h2><p class="mu">Accede a tu espacio de clase</p>
+  <label>Usuario o correo<input name="u" autocomplete="username" required autofocus></label><label>Contraseña<input name="p" type="password" autocomplete="current-password" required></label><button class="btn wide">Entrar</button><div id="first"></div></form></div>`;
+  try{const{data}=await sb.rpc('has_teacher');if(data===false)$('#first').innerHTML='<p><a href="#" onclick="teacherSetup();return false">👉 Primera vez: crear la cuenta del profesor</a></p>'}catch{}
+}
+function teacherSetup(){modal('Cuenta del profesor','<label>Tu nombre<input name="name" required></label><label>Tu correo<input type="email" name="email" required></label><label>Contraseña (mín. 6)<input type="password" name="pw" minlength="6" required></label>',
+  async f=>{const r=await sb.auth.signUp({email:f.get('email'),password:f.get('pw')});if(r.error)throw r.error;if(!r.data.session)throw new Error('Desactiva "Confirm email" en Supabase (ver LEEME.md)');
+    ck(await sb.rpc('claim_teacher',{pname:f.get('name')}));await boot()},'Crear')}
+async function doLogin(e){e.preventDefault();const f=new FormData(e.target);const r=await sb.auth.signInWithPassword({email:toEmail(f.get('u')),password:f.get('p')});if(r.error)return toast('Usuario o contraseña incorrectos');boot()}
+async function logout(){await sb.auth.signOut();S.me=null;loginView()}
+function pwModal(){modal('Cambiar contraseña','<label>Actual<input type="password" name="old" required></label><label>Nueva (mín. 6)<input type="password" name="new" required minlength="6"></label>',
+  async f=>{const a=await sb.auth.signInWithPassword({email:S.me.email,password:f.get('old')});if(a.error)throw new Error('La contraseña actual no es correcta');const r=await sb.auth.updateUser({password:f.get('new')});if(r.error)throw r.error;toast('Contraseña actualizada')})}
+
+// ---------- Shell ----------
+async function render(){
+  if(!S.me)return;const t=S.me.role==='teacher';let body='';
+  try{
+    if(t){
+      if(S.view==='home')body=await tHome();
+      else if(S.view==='students')body=await tStudents();
+      else if(S.view==='student'){S.D=await loadData(S.sid);body=studentPage(S.D,true)}
+      else if(S.view==='settings')body=await tSettings();
+    }else{S.D=await loadData(S.me.id);body=studentPage(S.D,false)}
+  }catch(e){body=`<div class="card">${esc(e.message)}</div>`}
+  const nav=t?[['home','🏠','Inicio'],['students','👩‍🎓','Alumnos'],['settings','⚙️','Ajustes']]:[['home','🏠','Inicio'],['tasks','📝','Tareas'],['docs','📚','Documentos'],['uploads','📂','Mis archivos'],['ach','🏆','Logros']];
+  const on=k=>t?(S.view===k||(k==='students'&&S.view==='student')):S.tab===k;
+  $('#app').innerHTML=`<div class="layout"><aside><div class="brand">🎓 ${esc(S.cfg.name)}</div>
+   ${nav.map(([k,i,l])=>`<button class="nav ${on(k)?'on':''}" onclick="${t?`go('${k}')`:`go('student',null,'${k}')`}">${i} ${l}</button>`).join('')}
+   <div class="me"><div class="mu" style="padding:0 12px 6px">${esc(S.me.name)} · ${t?'Profesor':'Alumno'}</div><button class="nav" onclick="pwModal()">🔑 Contraseña</button><button class="nav" onclick="logout()">🚪 Salir</button></div></aside><main>${body}</main></div>`;
+}
+const stat=(i,v,l)=>`<div class="card stat"><div class="ic">${i}</div><div><b>${v}</b><span class="mu">${l}</span></div></div>`;
+const avatar=u=>`<div class="av" style="background:${esc(u.color)}22;border:2px solid ${esc(u.color)}">${esc(u.emoji)}</div>`;
+const files=(l,del)=>(l||[]).map(f=>`<span class="file"><a href="#" onclick="dl(${f.id});return false" title="Descargar">📎 ${esc(f.name)}</a>${del?`<button type="button" onclick="delFile(${f.id})">✕</button>`:''}</span>`).join('');
+
+// ---------- Profesor ----------
+const studentCard=(x,admin)=>`<div class="card click" onclick="go('student','${x.id}')"><div class="row">${avatar(x)}<div style="flex:1"><b>${esc(x.name)}</b><div class="mu">${esc(x.subject||'Sin asignatura')} · @${esc(x.username)}</div></div></div>
+ <div class="row" style="margin-top:12px"><span class="chip">Nivel ${x.level}</span><span class="chip">⭐ ${x.xp}</span>${x.pend?`<span class="chip info">${x.pend} por corregir</span>`:''}${x.open?`<span class="chip warn">${x.open} abiertas</span>`:''}<span class="chip ok">Media ${x.avg!=null?(+x.avg).toFixed(1):'—'}</span></div>
+ ${admin?`<div class="row" style="margin-top:12px" onclick="event.stopPropagation()"><button class="btn ghost sm" onclick="studentForm('${x.id}')">✏️ Editar</button><button class="btn ghost sm" onclick="delStudent('${x.id}')">🗑️ Eliminar</button></div>`:''}</div>`;
+async function tHome(){
+  const o=await overview();S.list=o.students;
+  return `<h1>Hola 👋</h1><div class="stats">${stat('👩‍🎓',o.students.length,'Alumnos')}${stat('📥',o.pending.length,'Por corregir')}${stat('📝',o.students.reduce((s,x)=>s+x.open,0),'Tareas abiertas')}</div>
+  <h3>Entregas por corregir</h3>${o.pending.length?o.pending.map(p=>`<div class="card row between click" onclick="go('student','${p.sid}','tasks')"><div><b>${esc(p.name)}</b> · ${esc(p.title)}<div class="mu">Entregada ${fmt(p.submitted_at)}</div></div><span class="chip info">Corregir →</span></div>`).join(''):'<div class="card mu">Todo al día ✨</div>'}
+  <h3>Alumnos</h3><div class="grid">${o.students.map(x=>studentCard(x)).join('')}</div>`;
+}
+async function tStudents(){
+  const o=await overview();S.list=o.students;
+  return `<div class="row between"><h1>Alumnos</h1><button class="btn" onclick="studentForm()">+ Nuevo alumno</button></div><div class="grid">${o.students.map(x=>studentCard(x,true)).join('')||'<div class="card mu">Aún no hay alumnos</div>'}</div>`;
+}
+function studentForm(id){
+  const u=id?(S.list.find(x=>x.id===id)||S.D?.user):{};
+  modal(id?'Editar alumno':'Nuevo alumno',`<label>Nombre<input name="name" required value="${esc(u.name)}"></label><label>Asignatura<input name="subject" value="${esc(u.subject)}"></label>
+  <label>Usuario (para iniciar sesión${id?', no se puede cambiar':''})<input name="username" required ${id?'disabled':''} value="${esc(u.username)}" pattern="[a-z0-9._-]{2,30}" title="minúsculas, números, . _ -"></label><label>Contraseña ${id?'(vacío = no cambiar)':'(mín. 6)'}<input name="password" ${id?'':'required'} minlength="6"></label>
+  <div class="row"><div style="flex:1"><label>Emoji<input name="emoji" maxlength="4" value="${esc(u.emoji||'🎓')}"></label></div><div style="flex:1"><label>Color<input type="color" name="color" value="${u.color||'#6366f1'}"></label></div></div>`,
+  async f=>{const b={name:f.get('name').trim(),subject:f.get('subject'),emoji:f.get('emoji')||'🎓',color:f.get('color')},pw=f.get('password');
+    if(id){ck(await sb.from('profiles').update(b).eq('id',id));if(pw)ck(await sb.rpc('admin_set_password',{uid:id,pw}))}
+    else{const un=f.get('username').trim().toLowerCase();
+      const tmp=supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+      const{data,error}=await tmp.auth.signUp({email:toEmail(un),password:pw});if(error)throw error;
+      const r=await sb.from('profiles').insert({id:data.user.id,role:'student',username:un,...b});
+      if(r.error){await sb.rpc('delete_student',{uid:data.user.id});throw r.error}}
+    toast('Guardado')});
+}
+const delStudent=id=>ask('¿Eliminar alumno y TODOS sus datos y archivos?',async()=>{
+  const fl=ck(await sb.from('files').select('path').eq('student_id',id));if(fl.length)await sb.storage.from('archivos').remove(fl.map(f=>f.path));
+  ck(await sb.rpc('delete_student',{uid:id}))},'Alumno eliminado');
+
+// ---------- Vista de alumno ----------
+function studentPage(D,t){
+  const u=D.user,into=Math.max(0,D.xp)%D.step,tabs=[['tasks','📝 Tareas'],['docs','📚 Documentos'],['uploads','📂 Archivos del alumno'],['ach','🏆 Puntos y logros']];
+  const hero=`<div class="card hero">${avatar(u)}<div><h2 style="margin:0">${esc(u.name)}</h2><div class="mu">${esc(u.subject||'')}</div></div>
+   <div style="flex:2"><div class="row between"><b>Nivel ${D.level} · ${TITLES[Math.min(D.level-1,TITLES.length-1)]}</b><span class="mu">⭐ ${D.xp} pts · faltan ${D.step-into} para el nivel ${D.level+1}</span></div><div class="bar" style="margin-top:8px"><i style="width:${into/D.step*100}%"></i></div></div></div>`;
+  const tab={home:tabHome,tasks:tabTasks,docs:tabDocs,uploads:tabUploads,ach:tabAch}[S.tab]||tabTasks;
+  return (t?`<button class="btn ghost sm" onclick="go('students')">← Alumnos</button><div style="height:12px"></div>`:'')+hero+
+    (t?`<div class="tabs">${tabs.map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="go('student','${u.id}','${k}')">${l}</button>`).join('')}</div>`:'<div style="height:12px"></div>')+tab(D,t);
+}
+function tabHome(D){
+  const pend=D.tasks.filter(t=>!t.sub).sort((a,b)=>a.due>b.due?1:-1),gr=D.tasks.filter(t=>t.sub?.grade!=null),last=[...gr].sort((a,b)=>a.sub.graded_at<b.sub.graded_at?1:-1)[0];
+  const avg=gr.length?(gr.reduce((s,t)=>s+t.sub.grade,0)/gr.length).toFixed(1):'—';
+  return `<div class="stats">${stat('⭐',D.xp,'Puntos')}${stat('🎯',D.level,'Nivel')}${stat('📝',pend.length,'Pendientes')}${stat('📊',avg,'Nota media')}</div>
+  <h3>Próximas entregas</h3>${pend.slice(0,3).map(t=>taskCard(t,false)).join('')||'<div class="card mu">No tienes tareas pendientes 🎉</div>'}
+  ${last?`<h3>Última corrección</h3>${taskCard(last,false)}`:''}`;
+}
+function taskCard(t,te){
+  const s=t.sub,late=!s&&new Date(t.due)<new Date(),soon=!s&&!late&&new Date(t.due)-new Date()<1728e5;
+  const st=!s?(late?'<span class="chip bad">Vencida</span>':soon?'<span class="chip warn">Entrega pronto</span>':'<span class="chip">Pendiente</span>'):s.grade==null?'<span class="chip info">Entregada · sin corregir</span>':`<span class="chip ok">Nota ${s.grade}/10</span>`;
+  return `<div class="card"><div class="row between"><h4>${esc(t.title)}</h4>${st}</div><div class="mu">📅 ${fmt(t.due)} · ⭐ hasta ${t.max_xp} pts</div>${t.descr?`<p>${esc(t.descr)}</p>`:''}${files(t.files,false)}
+  ${s?`<div class="sub"><b>Entrega</b> · ${fmt(s.submitted_at)}${s.comment?`<p>${esc(s.comment)}</p>`:''}${files(s.files,false)}</div>`:''}
+  ${s&&s.grade!=null?`<div class="fb"><b>Corrección · +${s.xp_awarded} pts</b><p>${esc(s.feedback||'Sin comentarios')}</p></div>`:''}
+  <div class="row" style="margin-top:12px">${te?`${s?`<button class="btn sm" onclick="gradeForm(${t.id})">${s.grade==null?'✅ Corregir':'✏️ Recorregir'}</button>`:''}${s&&s.grade!=null?`<button class="btn ghost sm" onclick="act(()=>reopen(${t.id}))">↩️ Reabrir</button>`:''}<button class="btn ghost sm" onclick="taskForm(${t.id})">✏️ Editar</button><button class="btn ghost sm" onclick="ask('¿Eliminar tarea?',()=>delTask(${t.id}))">🗑️</button>`
+   :(!s||s.grade==null)?`<button class="btn sm" onclick="submitForm(${t.id})">📤 ${s?'Volver a entregar':'Entregar'}</button>`:''}</div></div>`;
+}
+function tabTasks(D,te){
+  const g=(l,f)=>{const a=D.tasks.filter(f);return a.length?`<h3>${l} (${a.length})</h3>`+a.map(t=>taskCard(t,te)).join(''):''};
+  return (te?`<button class="btn" onclick="taskForm()">+ Nueva tarea</button>`:'')+g('Pendientes',t=>!t.sub)+g('Por corregir',t=>t.sub&&t.sub.grade==null)+g('Corregidas',t=>t.sub&&t.sub.grade!=null)+(D.tasks.length?'':'<div class="card mu" style="margin-top:12px">Aún no hay tareas</div>');
+}
+function taskForm(id){
+  const t=id?S.D.tasks.find(x=>x.id===id):{max_xp:50};
+  modal(id?'Editar tarea':'Nueva tarea',`<label>Título<input name="title" required value="${esc(t.title)}"></label><label>Descripción<textarea name="descr">${esc(t.descr)}</textarea></label>
+  <div class="row"><div style="flex:2"><label>Fecha de entrega<input type="datetime-local" name="due" required value="${t.due?loc(t.due):''}"></label></div><div style="flex:1"><label>Puntos máx.<input type="number" name="max_xp" min="0" value="${t.max_xp}"></label></div></div>
+  <label>Adjuntar archivos<input type="file" name="files" multiple></label>${id?files(t.files,true):''}`,
+  async f=>{const b={title:f.get('title'),descr:f.get('descr'),due:new Date(f.get('due')).toISOString(),max_xp:+f.get('max_xp')||0};let tid=id;
+    if(id)ck(await sb.from('tasks').update(b).eq('id',id));else tid=ck(await sb.from('tasks').insert({...b,student_id:S.sid}).select('id').single()).id;
+    await upload(f.getAll('files'),S.sid,'task',tid)});
+}
+async function delTask(id){
+  const t=S.D.tasks.find(x=>x.id===id);await rmFiles([...t.files,...(t.sub?.files||[])]);
+  if(t.sub)ck(await sb.from('xp_log').delete().eq('ref','sub:'+t.sub.id));
+  ck(await sb.from('tasks').delete().eq('id',id));
+}
+function submitForm(id){modal('Entregar tarea','<label>Comentario (opcional)<textarea name="comment"></textarea></label><label>Archivos<input type="file" name="files" multiple></label>',async f=>{
+  const t=S.D.tasks.find(x=>x.id===id);let s=t.sub;
+  if(s)ck(await sb.from('submissions').update({comment:f.get('comment')}).eq('id',s.id));
+  else s=ck(await sb.from('submissions').insert({task_id:id,comment:f.get('comment')}).select().single());
+  await upload(f.getAll('files'),S.me.id,'sub',s.id);toast('¡Entregada! 🚀')},'Entregar')}
+function gradeForm(id){
+  const t=S.D.tasks.find(x=>x.id===id),s=t.sub;
+  modal('Corregir tarea',`<label>Nota (0-10)<input type="number" name="grade" min="0" max="10" step="0.1" required value="${s.grade??''}"></label><label>Comentarios para el alumno<textarea name="feedback">${esc(s.feedback)}</textarea></label>
+  <label>Puntos extra (opcional)<input type="number" name="bonus" value="0"></label><p class="mu">Puntos = nota/10 × puntos máx. + bonus por entrega puntual + extra.</p>`,
+  async f=>{const g=Math.max(0,Math.min(10,+f.get('grade'))),xp=Math.round(g/10*t.max_xp)+(new Date(s.submitted_at)<=new Date(t.due)?S.cfg.xp_on_time:0)+(parseInt(f.get('bonus'))||0);
+    ck(await sb.from('submissions').update({grade:g,feedback:f.get('feedback'),xp_awarded:xp,graded_at:new Date().toISOString()}).eq('id',s.id));
+    ck(await sb.from('xp_log').delete().eq('ref','sub:'+s.id));
+    ck(await sb.from('xp_log').insert({student_id:S.sid,amount:xp,reason:'Tarea: '+t.title,ref:'sub:'+s.id}));
+    await checkBadges(S.sid);toast('Corregida')});
+}
+async function reopen(id){const s=S.D.tasks.find(x=>x.id===id).sub;ck(await sb.from('submissions').update({grade:null,xp_awarded:null,graded_at:null}).eq('id',s.id));ck(await sb.from('xp_log').delete().eq('ref','sub:'+s.id))}
+function tabDocs(D,te){
+  return (te?`<button class="btn" onclick="fileForm(true)">+ Subir documento</button>`:'')+`<h3>Documentos de clase</h3>`+(D.docs.map(f=>`<div class="card row between"><div>${files([f],false)}<div class="mu">${esc(f.note)} · ${fmt(f.created_at)}</div></div>${te?`<button class="btn ghost sm" onclick="delFile(${f.id})">🗑️</button>`:''}</div>`).join('')||'<div class="card mu">Sin documentos todavía</div>');
+}
+function tabUploads(D,te){
+  return (te?'':`<button class="btn" onclick="fileForm(false)">+ Subir archivo</button>`)+`<h3>${te?'Archivos subidos por el alumno':'Mis apuntes, notas y actividades'}</h3>`+(D.uploads.map(f=>`<div class="card row between"><div>${files([f],false)}<div class="mu"><span class="chip">${esc(f.note||'Otro')}</span> ${fmt(f.created_at)}</div></div><button class="btn ghost sm" onclick="delFile(${f.id})">🗑️</button></div>`).join('')||'<div class="card mu">Sin archivos todavía</div>');
+}
+function fileForm(doc){
+  modal(doc?'Subir documento':'Subir archivo',`<label>Archivos<input type="file" name="files" multiple required></label>`+(doc?'<label>Descripción<input name="note" placeholder="Ej: Tema 3 - Ejercicios"></label>':'<label>Tipo<select name="note"><option>Apuntes</option><option>Notas del cole</option><option>Actividad</option><option>Examen</option><option>Otro</option></select></label>'),
+  async f=>{await upload(f.getAll('files'),SID(),doc?'doc':'upload',null,f.get('note'));toast('Subido')});
+}
+function tabAch(D,te){
+  return (te?`<div class="row"><button class="btn" onclick="xpForm()">± Dar o quitar puntos</button><span class="mu">Pulsa una insignia para concederla o retirarla</span></div>`:'')+`<h3>Insignias</h3><div class="badges">${D.badges.map(b=>`<div class="card badge ${b.earned?'':'off'} ${te?'click':''}" ${te?`onclick="act(()=>toggleBadge(${b.id},${b.earned}))"`:''} title="${esc(b.descr)}"><div class="i">${esc(b.icon)}</div><b>${esc(b.name)}</b><div class="mu">${esc(b.descr)}</div></div>`).join('')}</div>
+  <h3>Historial de puntos</h3><div class="card">${D.log.map(l=>`<div class="log"><span>${esc(l.reason)} <span class="mu">${fmt(l.created_at)}</span></span><span class="${l.amount>=0?'pos':'neg'}">${l.amount>0?'+':''}${l.amount}</span></div>`).join('')||'<span class="mu">Sin movimientos</span>'}</div>`;
+}
+async function toggleBadge(bid,has){ck(has?await sb.from('student_badges').delete().eq('student_id',S.sid).eq('badge_id',bid):await sb.from('student_badges').insert({student_id:S.sid,badge_id:bid}))}
+const xpForm=()=>modal('Ajustar puntos','<label>Cantidad (negativa para restar)<input type="number" name="amount" required></label><label>Motivo<input name="reason" placeholder="Buena participación"></label>',async f=>{
+  ck(await sb.from('xp_log').insert({student_id:S.sid,amount:parseInt(f.get('amount')),reason:f.get('reason')||'Ajuste manual'}));await checkBadges(S.sid);toast('Puntos actualizados')});
+
+// ---------- Ajustes ----------
+async function tSettings(){
+  const bs=ck(await sb.from('badges').select('*').order('id'));S.badges=bs;const c=S.cfg;
+  return `<h1>Ajustes</h1><form class="card" onsubmit="saveCfg(event)"><h4>Plataforma y gamificación</h4>
+  <label>Nombre de la plataforma<input name="name" value="${esc(c.name)}"></label>
+  <div class="row"><div style="flex:1"><label>Color principal<input type="color" name="accent" value="${c.accent}"></label></div><div style="flex:1"><label>Bonus por entrega puntual (pts)<input type="number" name="xp_on_time" value="${c.xp_on_time}"></label></div><div style="flex:1"><label>Puntos por nivel<input type="number" name="level_step" min="10" value="${c.level_step}"></label></div></div><button class="btn wide">Guardar ajustes</button></form>
+  <div class="row between"><h3>Insignias</h3><button class="btn sm" onclick="badgeForm()">+ Nueva insignia</button></div>
+  ${bs.map(b=>`<div class="card row between"><div><span style="font-size:24px">${esc(b.icon)}</span> <b>${esc(b.name)}</b> <span class="mu">${esc(b.descr)} · ${RULES[b.rule]}${b.rule!=='manual'?' '+b.value:''}</span></div><div class="row"><button class="btn ghost sm" onclick="badgeForm(${b.id})">✏️</button><button class="btn ghost sm" onclick="ask('¿Eliminar insignia?',async()=>ck(await sb.from('badges').delete().eq('id',${b.id})))">🗑️</button></div></div>`).join('')}`;
+}
+async function saveCfg(e){e.preventDefault();try{const o=Object.fromEntries(new FormData(e.target));
+  ck(await sb.from('settings').upsert(Object.entries(o).map(([key,value])=>({key,value:String(value)}))));
+  Object.assign(S.cfg,{name:o.name,accent:o.accent,xp_on_time:+o.xp_on_time,level_step:+o.level_step||100});applyCfg();toast('Guardado');render()}catch(x){toast(x.message)}}
+function badgeForm(id){
+  const b=id?S.badges.find(x=>x.id===id):{icon:'🏅',rule:'manual',value:1};
+  modal(id?'Editar insignia':'Nueva insignia',`<div class="row"><div style="width:80px"><label>Icono<input name="icon" maxlength="4" value="${esc(b.icon)}"></label></div><div style="flex:1"><label>Nombre<input name="name" required value="${esc(b.name)}"></label></div></div>
+  <label>Descripción<input name="descr" value="${esc(b.descr)}"></label><label>Cómo se consigue<select name="rule">${Object.entries(RULES).map(([k,v])=>`<option value="${k}" ${b.rule===k?'selected':''}>${v}</option>`).join('')}</select></label><label>Valor<input type="number" name="value" value="${b.value}"></label>`,
+  async f=>{const o=Object.fromEntries(f);o.value=+o.value||0;ck(id?await sb.from('badges').update(o).eq('id',id):await sb.from('badges').insert(o));
+    for(const u of ck(await sb.from('profiles').select('id').eq('role','student')))await checkBadges(u.id)});
+}
+boot();
+</script></body></html>
