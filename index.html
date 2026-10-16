@@ -45,6 +45,13 @@ dialog{border:0;border-radius:24px;padding:28px;width:min(520px,94vw);background
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--card);padding:12px 24px;border-radius:99px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:99;animation:slideUp .3s ease}
 @keyframes slideUp{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 @media(max-width:800px){.layout{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px}.brand{padding:4px}.nav{width:auto;padding:8px 12px}.me{margin:0 0 0 auto;border:0;padding:0}main{padding:16px}.hero{flex-direction:column;text-align:center}.hero>div:nth-child(2){min-width:100%}.hero .btn.live{width:100%;justify-content:center}.stats{grid-template-columns:1fr 1fr}}
+.btn.live.mega{display:flex;justify-content:center;width:100%;font-size:24px;padding:30px;border-radius:22px}
+.btn.live.off{animation:none;background:var(--mu);pointer-events:none}
+aside .btn.live{width:100%;justify-content:center;margin-bottom:10px;font-size:15px;padding:12px}
+.fb.fix{background:color-mix(in srgb,var(--warn) 14%,transparent)}
+details.folder{margin:18px 0}details.folder>summary{cursor:pointer;font-weight:700;font-size:17px;margin-bottom:6px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.btn.live{animation:none}*{transition:none!important}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script></head><body><div id="app"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -52,7 +59,7 @@ const fmt=d=>d?new Date(d).toLocaleString('es-ES',{day:'numeric',month:'short',h
 const loc=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)};
 const TITLES=['Novato','Aprendiz','Explorador','Estudiante','Aplicado','Experto','Maestro','Leyenda'];
 const RULES={manual:'Manual (la concedes tú)',tasks:'Tareas corregidas ≥',ontime:'Entregas puntuales ≥',top:'Notas de 9 o más (cantidad) ≥',xp:'Puntos totales ≥'};
-const S={me:null,cfg:{name:'Plataforma de Clases',accent:'#6366f1',xp_on_time:10,level_step:100},view:'home',sid:null,tab:'tasks',D:null,list:[]};
+const S={me:null,cfg:{name:'Plataforma de Clases',accent:'#6366f1',xp_on_time:10,level_step:100,xp_early:50,early_h:24,xp_top:100,top_grade:8,xp_notes:20,xp_late:0,quota_mb:1000,rewards:[]},view:'home',sid:null,tab:'tasks',D:null,list:[]};
 const CFG=window.CFG;let sb,FM={};
 if(CFG){try{CFG.SUPABASE_URL=new URL(/^https?:/i.test(CFG.SUPABASE_URL.trim())?CFG.SUPABASE_URL.trim():'https://'+CFG.SUPABASE_URL.trim()).origin}catch{}CFG.SUPABASE_KEY=String(CFG.SUPABASE_KEY||'').trim()}
 const ck=r=>{if(r.error)throw r.error;return r.data};
@@ -62,6 +69,11 @@ const applyCfg=()=>{document.documentElement.style.setProperty('--ac',S.cfg.acce
 const toEmail=u=>{u=String(u).trim().toLowerCase();if(u.includes('@'))return u;const[l,d]=CFG.ALIAS_EMAIL.split('@');return `${l}+${u}@${d}`};
 const lvl=xp=>Math.floor(Math.max(0,xp)/S.cfg.level_step)+1;
 const SID=()=>S.me.role==='teacher'?S.sid:S.me.id;
+const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
+const NC=()=>!!S.me&&'next_class' in S.me;
+const stOf=t=>{const s=t.sub;return !s?'pending':s.grade!=null?'graded':s.graded_at?'fix':'sent'};
+const filt=q=>document.querySelectorAll('.table tbody tr').forEach(r=>r.hidden=!r.textContent.toLowerCase().includes(q.toLowerCase()));
+const MAX_MB=15,OK_EXT=/\.(pdf|jpe?g|png|webp|docx?|xlsx?|pptx?|txt)$/i;
 
 function modal(title,body,ok,label='Guardar'){
   const d=document.createElement('dialog');d.innerHTML=`<form><h3>${title}</h3>${body}<div class="row end"><button type="button" class="btn ghost" data-x>Cancelar</button><button class="btn">${label}</button></div></form>`;
@@ -73,14 +85,14 @@ const act=async(fn,msg)=>{try{await fn();msg&&toast(msg);render()}catch(e){toast
 const ask=(t,fn,msg)=>confirm(t)&&act(fn,msg);
 
 // ---------- Datos ----------
-async function loadCfg(){const rows=ck(await sb.from('settings').select('*'));rows.forEach(r=>S.cfg[r.key]=['name','accent'].includes(r.key)?r.value:+r.value)}
+async function loadCfg(){const rows=ck(await sb.from('settings').select('*'));rows.forEach(r=>{if(['name','accent'].includes(r.key))S.cfg[r.key]=r.value;else if(r.key==='rewards'){try{S.cfg.rewards=JSON.parse(r.value)||[]}catch{S.cfg.rewards=[]}}else if(r.key in S.cfg&&!isNaN(+r.value))S.cfg[r.key]=+r.value})}
 async function overview(){
-  const[st,ts,ss,xs]=(await Promise.all([sb.from('profiles').select('*').eq('role','student').order('name'),sb.from('tasks').select('id,student_id,title,due'),sb.from('submissions').select('id,task_id,grade,submitted_at'),sb.from('xp_log').select('student_id,amount')])).map(ck);
+  const[st,ts,ss,xs]=(await Promise.all([sb.from('profiles').select('*').eq('role','student').order('name'),sb.from('tasks').select('id,student_id,title,due'),sb.from('submissions').select('id,task_id,grade,submitted_at,graded_at'),sb.from('xp_log').select('student_id,amount')])).map(ck);
   const tOf=Object.fromEntries(ts.map(t=>[t.id,t]));
   const students=st.map(u=>{const my=ts.filter(t=>t.student_id===u.id),ms=ss.filter(s=>tOf[s.task_id]?.student_id===u.id),gr=ms.filter(s=>s.grade!=null),xp=xs.filter(x=>x.student_id===u.id).reduce((a,x)=>a+x.amount,0);
     const late=my.filter(t=>new Date(t.due)<new Date()&&!ms.some(s=>s.task_id===t.id)).length;
-    return{...u,xp,level:lvl(xp),pend:ms.length-gr.length,open:my.length-ms.length,late,avg:gr.length?gr.reduce((a,s)=>a+s.grade,0)/gr.length:null}});
-  const pending=ss.filter(s=>s.grade==null).sort((a,b)=>a.submitted_at>b.submitted_at?1:-1).map(s=>{const t=tOf[s.task_id],u=st.find(x=>x.id===t.student_id);return{id:s.id,submitted_at:s.submitted_at,title:t.title,name:u.name,sid:u.id}});
+    return{...u,xp,level:lvl(xp),pend:ms.filter(s=>s.grade==null&&!s.graded_at).length,fix:ms.filter(s=>s.grade==null&&s.graded_at).length,open:my.length-ms.length,late,avg:gr.length?gr.reduce((a,s)=>a+s.grade,0)/gr.length:null}});
+  const pending=ss.filter(s=>s.grade==null&&!s.graded_at).sort((a,b)=>a.submitted_at>b.submitted_at?1:-1).map(s=>{const t=tOf[s.task_id],u=st.find(x=>x.id===t.student_id);return{id:s.id,submitted_at:s.submitted_at,title:t.title,name:u.name,sid:u.id}});
   return{students,pending};
 }
 async function loadData(sid){
@@ -90,10 +102,20 @@ async function loadData(sid){
   const of=(k,r)=>fl.filter(f=>f.kind===k&&(r===undefined||f.ref===r)),xp=lg.reduce((a,x)=>a+x.amount,0),earned=new Set(sbd.map(x=>x.badge_id));
   return{user:u,xp,level:lvl(xp),step:S.cfg.level_step,
     tasks:ts.map(t=>{const s=ss.find(x=>x.task_id===t.id);return{...t,files:of('task',t.id),sub:s?{...s,files:of('sub',s.id)}:null}}),
-    docs:of('doc'),uploads:of('upload'),log:lg.slice(0,50),badges:bs.map(b=>({...b,earned:earned.has(b.id)}))};
+    docs:of('doc'),uploads:of('upload'),log:lg.slice(0,50),logAll:lg,refs:new Set(lg.map(x=>x.ref)),badges:bs.map(b=>({...b,earned:earned.has(b.id)}))};
+}
+async function shrink(f){
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size<250e3)return f;
+  try{const bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(bm,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.8));
+    return b&&b.size<f.size?new File([b],f.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}):f}catch{return f}
 }
 async function upload(list,sid,kind,ref,note){
-  for(const f of list){if(!f.size)continue;
+  for(let f of list){if(!f.size)continue;
+    if(!OK_EXT.test(f.name))throw new Error('Formato no admitido: '+f.name);
+    if(f.size>MAX_MB*1048576)throw new Error(`${f.name} supera ${MAX_MB} MB`);
+    f=await shrink(f);
     const path=`${sid}/${crypto.randomUUID()}${(f.name.match(/\.[A-Za-z0-9]{1,8}$/)||[''])[0]}`;
     const u=await sb.storage.from('archivos').upload(path,f);if(u.error)throw u.error;
     ck(await sb.from('files').insert({student_id:sid,kind,ref:ref||null,name:f.name,path,uploader:S.me.role,note:note||''}));}
@@ -122,6 +144,7 @@ const promptUpload = (files, isDoc) => {
 async function boot(){
   if(!CFG||CFG.SUPABASE_URL.includes('XXXX')){$('#app').innerHTML='<div class="login"><div class="card"><h2>⚙️ Falta configurar</h2><p>Edita <b>config.js</b> con los datos de Supabase (mira LEEME.md).</p></div></div>';return}
   sb=sb||supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY);
+  if(!sb.__l){sb.__l=1;sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')setTimeout(recoveryModal,300)})}
   try{await loadCfg()}catch(e){}applyCfg();
   const{data:{session}}=await sb.auth.getSession();if(!session)return loginView();
   const{data:p}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
@@ -137,10 +160,10 @@ async function loginView(){
   catch(e){note=`<p class="mu">⚠️ ${esc(e.message)}</p><p><a href="#" onclick="teacherSetup();return false">👉 Primera vez: crear la cuenta del profesor</a></p>`}
   $('#first').innerHTML=note;
 }
-async function resetPw(){
-   const u=prompt('Introduce tu correo de recuperación:');
-   if(u){ const r=await sb.auth.resetPasswordForEmail(toEmail(u)); if(r.error)toast(r.error.message); else toast('Si el correo existe, recibirás un enlace de recuperación.'); }
-}
+function resetPw(){modal('Recuperar contraseña','<label>Usuario o correo<input name="u" required autofocus></label><p class="mu">Te enviaremos un enlace al correo asociado a la cuenta.</p>',
+  async f=>{const r=await sb.auth.resetPasswordForEmail(toEmail(f.get('u')),{redirectTo:location.href.split('#')[0]});if(r.error)throw r.error;toast('Si la cuenta existe, recibirás un enlace de recuperación')},'Enviar enlace')}
+function recoveryModal(){modal('Elige tu nueva contraseña','<label>Nueva contraseña (mín. 6)<input type="password" name="pw" minlength="6" required></label>',
+  async f=>{const r=await sb.auth.updateUser({password:f.get('pw')});if(r.error)throw r.error;toast('Contraseña actualizada');history.replaceState(null,'',location.pathname);boot()},'Guardar contraseña')}
 function teacherSetup(){modal('Cuenta del profesor','<label>Tu nombre<input name="name" required></label><label>Tu correo<input type="email" name="email" required></label><label>Contraseña (mín. 6)<input type="password" name="pw" minlength="6" required></label>',
   async f=>{const r=await sb.auth.signUp({email:f.get('email'),password:f.get('pw')});if(r.error)throw r.error;if(!r.data.session)throw new Error('Desactiva "Confirm email" en Supabase (ver LEEME.md)');
     ck(await sb.rpc('claim_teacher',{pname:f.get('name')}));await boot()},'Crear')}
@@ -160,9 +183,9 @@ async function render(){
       else if(S.view==='settings')body=await tSettings();
     }else{S.D=await loadData(S.me.id);body=studentPage(S.D,false)}
   }catch(e){body=`<div class="card">${esc(e.message)}</div>`}
-  const nav=t?[['home','🏠','Centro de Operaciones'],['students','👩‍🎓','Directorio Alumnos'],['settings','⚙️','Ajustes del Sistema']]:[['home','🏠','Resumen'],['tasks','📝','Módulo de Asignaciones'],['uploads','📥','Buzón (Mis Entregas)'],['docs','📚','Repositorio de Clase'],['ach','🏆','Progresión y Puntos']];
+  const nav=t?[['home','🏠','Centro de Operaciones'],['students','👩‍🎓','Directorio Alumnos'],['settings','⚙️','Ajustes del Sistema']]:[['home','🏠','Resumen'],['tasks','📝','Módulo de Asignaciones'],['uploads','📥','Buzón y Apuntes'],['docs','📚','Repositorio de Clase'],['ach','🏆','Progresión y Puntos']];
   const on=k=>t?(S.view===k||(k==='students'&&S.view==='student')):S.tab===k;
-  $('#app').innerHTML=`<div class="layout"><aside><div class="brand">🎓 ${esc(S.cfg.name)}</div>
+  $('#app').innerHTML=`<div class="layout"><aside><div class="brand">🎓 ${esc(S.cfg.name)}</div>${!t&&S.D&&safeUrl(S.D.user.meet_link)?`<a class="btn live" href="${esc(safeUrl(S.D.user.meet_link))}" target="_blank" rel="noopener">🎥 Entrar a clase</a>`:''}
    ${nav.map(([k,i,l])=>`<button class="nav ${on(k)?'on':''}" onclick="${t?`go('${k}')`:`go('student',null,'${k}')`}">${i}${l}</button>`).join('')}
    <div class="me"><div class="mu" style="padding:0 12px 8px">${esc(S.me.name)}<br><b>${t?'Modo Dios (Admin)':'Alumno'}</b></div><button class="nav" onclick="pwModal()">🔑 Contraseña</button><button class="nav" onclick="logout()">🚪 Cerrar Sesión</button></div></aside><main>${body}</main></div>`;
 }
@@ -173,16 +196,16 @@ const files=(l,del)=>(l||[]).map(f=>`<span class="file"><a href="#" onclick="dl(
 // ---------- Profesor ----------
 async function tHome(){
   const o=await overview();S.list=o.students;
-  return `<h1>Panel de Dios ⚡</h1><div class="stats">${stat('👩‍🎓',o.students.length,'Alumnos')}${stat('📥',o.pending.length,'Por corregir')}${stat('🔴',o.students.reduce((s,x)=>s+x.late,0),'Tareas atrasadas')}</div>
-  <h3>Vista de Pájaro (CRM Global)</h3>
+  return `<h1>Panel de Dios ⚡</h1><div class="stats">${stat('👩‍🎓',o.students.length,'Alumnos')}${stat('📥',o.pending.length,'Por corregir')}${stat('🔴',o.students.reduce((s,x)=>s+x.late,0),'Tareas atrasadas')}${stat('📊',(a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):'—')(o.students.filter(x=>x.avg!=null).map(x=>x.avg)),'Nota media global')}</div>
+  <h3>Vista de Pájaro (CRM Global)</h3><input type="search" placeholder="🔍 Buscar alumno…" oninput="filt(this.value)" style="max-width:320px;margin-bottom:12px">
   <div class="card" style="padding:0;overflow-x:auto">
     <table class="table">
       <thead><tr><th>Alumno</th><th>Estado Operativo</th><th>Saldo de Puntos</th><th>Acciones Rápidas</th></tr></thead>
       <tbody>
         ${o.students.length ? o.students.map(x=>`<tr class="click" onclick="go('student','${x.id}')">
-          <td><div class="row">${avatar(x)}<div><b>${esc(x.name)}</b><br><span class="mu">${esc(x.subject\vert{}\vert{}'Sin asignatura')} · @${esc(x.username)}</span></div></div></td>
-          <td>${x.late?`<span class="chip bad">🔴 ${x.late} tareas atrasadas</span>`:x.pend?`<span class="chip info">🔵 ${x.pend} esperando corrección</span>`:x.open?`<span class="chip warn">🟠 ${x.open} abiertas en curso</span>`:`<span class="chip ok">🟢 Todo al día</span>`}</td>
-          <td><span class="chip">⭐ ${x.xp} pts (Nivel${x.level})</span></td>
+          <td><div class="row">${avatar(x)}<div><b>${esc(x.name)}</b><br><span class="mu">${esc(x.subject||'Sin asignatura')} · @${esc(x.username)}</span></div></div></td>
+          <td>${x.late?`<span class="chip bad">🔴 ${x.late} tareas atrasadas</span>`:x.pend?`<span class="chip info">🔵 ${x.pend} esperando corrección</span>`:x.fix?`<span class="chip warn">🟡 ${x.fix} en corrección por el alumno</span>`:x.open?`<span class="chip warn">🟠 ${x.open} abiertas en curso</span>`:`<span class="chip ok">🟢 Todo al día</span>`}</td>
+          <td><span class="chip">⭐ ${x.xp} pts (Nivel ${x.level})</span></td>
           <td onclick="event.stopPropagation()"><button class="btn ghost sm" onclick="studentForm('${x.id}')">✏️ Perfil</button> <button class="btn ghost sm" onclick="xpForm('${x.id}')">± Puntos</button></td>
         </tr>`).join('') : '<tr><td colspan="4" class="mu" style="text-align:center">Aún no hay alumnos creados</td></tr>'}
       </tbody>
@@ -198,9 +221,9 @@ function studentForm(id){
   const u=id?(S.list.find(x=>x.id===id)||S.D?.user):{};
   modal(id?'Editar Perfil del Alumno':'Nuevo Alumno',`<label>Nombre<input name="name" required value="${esc(u.name)}"></label><label>Asignatura<input name="subject" value="${esc(u.subject)}"></label>
   <label>Enlace de Clase en Vivo (URL de Google Meet, Zoom, etc.)<input type="url" name="meet_link" value="${esc(u.meet_link||'')}"></label>
-  <label>Usuario (para el login${id?', no se puede cambiar':''})<input name="username" required ${id?'disabled':''} value="${esc(u.username)}" pattern="[a-z0-9._-]{2,30}" title="minúsculas, números, . _ -"></label><label>Contraseña ${id?'(vacío = no cambiar)':'(mín. 6)'}<input name="password" ${id?'':'required'} minlength="6"></label>
+  ${NC()?`<label>Próxima clase<input type="datetime-local" name="next_class" value="${u.next_class?loc(u.next_class):''}"></label>`:''}<label>Usuario (para el login${id?', no se puede cambiar':''})<input name="username" required ${id?'disabled':''} value="${esc(u.username)}" pattern="[a-z0-9._-]{2,30}" title="minúsculas, números, . _ -"></label><label>Contraseña ${id?'(vacío = no cambiar)':'(mín. 6)'}<input name="password" ${id?'':'required'} minlength="6"></label>
   <div class="row"><div style="flex:1"><label>Emoji<input name="emoji" maxlength="4" value="${esc(u.emoji||'🎓')}"></label></div><div style="flex:1"><label>Color<input type="color" name="color" value="${u.color||'#6366f1'}"></label></div></div>`,
-  async f=>{const b={name:f.get('name').trim(),subject:f.get('subject'),emoji:f.get('emoji')||'🎓',color:f.get('color'),meet_link:f.get('meet_link')};const pw=f.get('password');
+  async f=>{const b={name:f.get('name').trim(),subject:f.get('subject'),emoji:f.get('emoji')||'🎓',color:f.get('color'),meet_link:f.get('meet_link')};if(NC())b.next_class=f.get('next_class')?new Date(f.get('next_class')).toISOString():null;const pw=f.get('password');
     if(id){ck(await sb.from('profiles').update(b).eq('id',id));if(pw)ck(await sb.rpc('admin_set_password',{uid:id,pw}))}
     else{const un=f.get('username').trim().toLowerCase();
       const tmp=supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
@@ -218,33 +241,39 @@ function studentPage(D,t){
   const u=D.user,into=Math.max(0,D.xp)%D.step,tabs=[['tasks','📝 Asignaciones'],['uploads','📥 Buzón (Uploads)'],['docs','📚 Repositorio'],['ach','🏆 Motor de Gamificación']];
   const hero=`<div class="card hero">${avatar(u)}<div><h2 style="margin:0">${esc(u.name)}</h2><div class="mu">${esc(u.subject||'')}</div></div>
    <div style="flex:2"><div class="row between"><b>Nivel ${D.level} · ${TITLES[Math.min(D.level-1,TITLES.length-1)]}</b><span class="mu">⭐ ${D.xp} pts · faltan ${D.step-into} para el nivel ${D.level+1}</span></div><div class="bar" style="margin-top:8px"><i style="width:${into/D.step*100}%"></i></div></div>
-   ${u.meet_link ? `<div style="flex:none;margin-left:auto"><a href="${esc(u.meet_link)}" target="_blank" class="btn live">🎥 Entrar a Clase</a></div>` : ''}</div>`;
+   ${t&&safeUrl(u.meet_link) ? `<div style="flex:none;margin-left:auto"><a href="${esc(safeUrl(u.meet_link))}" target="_blank" rel="noopener" class="btn live">🎥 Entrar a Clase</a></div>` : ''}</div>`;
   const tab={home:tabHome,tasks:tabTasks,docs:tabDocs,uploads:tabUploads,ach:tabAch}[S.tab]||tabTasks;
   return (t?`<button class="btn ghost sm" onclick="go('home')">← Volver al Panel Global</button><div style="height:12px"></div>`:'')+hero+
     (t?`<div class="tabs">${tabs.map(([k,l])=>`<button class="${S.tab===k?'on':''}" onclick="go('student','${u.id}','${k}')">${l}</button>`).join('')}</div>`:'<div style="height:12px"></div>')+tab(D,t);
 }
 function tabHome(D){
-  const pend=D.tasks.filter(t=>!t.sub).sort((a,b)=>a.due>b.due?1:-1),gr=D.tasks.filter(t=>t.sub?.grade!=null),last=[...gr].sort((a,b)=>a.sub.graded_at<b.sub.graded_at?1:-1)[0];
-  const avg=gr.length?(gr.reduce((s,t)=>s+t.sub.grade,0)/gr.length).toFixed(1):'—';
-  return `<div class="stats">${stat('⭐',D.xp,'Puntos (Economía)')}${stat('📝',pend.length,'Tareas Pendientes')}${stat('📊',avg,'Nota Media Histórica')}</div>
-  <h3>Próximas entregas (Deadline)</h3>${pend.slice(0,3).map(t=>taskCard(t,false)).join('')||'<div class="card mu">No tienes tareas pendientes, estás al día. 🎉</div>'}`;
+  const u=D.user,pend=D.tasks.filter(t=>['pending','fix'].includes(stOf(t))).sort((a,b)=>a.due>b.due?1:-1),fix=pend.filter(t=>stOf(t)==='fix'),
+    nc=u.next_class&&new Date(u.next_class)>new Date()?u.next_class:null,link=safeUrl(u.meet_link),into=Math.max(0,D.xp)%D.step,
+    nr=[...(S.cfg.rewards||[])].filter(r=>r.level>D.level).sort((a,b)=>a.level-b.level)[0];
+  return `<a ${link?`href="${esc(link)}" target="_blank" rel="noopener"`:''} class="btn live mega ${link?'':'off'}">🎥 ${link?'Entrar a clase':'Aún no hay enlace de clase'}</a>
+  <div class="stats" style="margin-top:16px">${stat('📝',pend.length,'Tareas pendientes')}${'next_class' in u?stat('📅',nc?fmt(nc):'Sin fecha','Próxima clase'):''}${stat('⭐','Nivel '+D.level,D.xp+' puntos')}</div>
+  <div class="card" style="margin-top:14px"><div class="row between"><b>${TITLES[Math.min(D.level-1,TITLES.length-1)]}</b><span class="mu">Faltan ${D.step-into} pts para el nivel ${D.level+1}</span></div><div class="bar" style="margin-top:8px"><i style="width:${into/D.step*100}%"></i></div>${nr?`<p class="mu" style="margin-bottom:0">🎁 Nivel ${nr.level}: ${esc(nr.text)}</p>`:''}</div>
+  ${fix.length?`<h3>Necesitan corrección (${fix.length})</h3>${fix.map(t=>taskCard(t,false)).join('')}`:''}
+  <h3>Próximas entregas</h3>${pend.filter(t=>stOf(t)==='pending').slice(0,3).map(t=>taskCard(t,false)).join('')||'<div class="card mu">Estás al día. No tienes tareas pendientes. 🎉</div>'}`;
 }
 function taskCard(t,te){
-  const s=t.sub,late=!s&&new Date(t.due)<new Date(),soon=!s&&!late&&new Date(t.due)-new Date()<1728e5;
-  const st=!s?(late?'<span class="chip bad">🔴 Vencida (Deadline pasado)</span>':soon?'<span class="chip warn">🟠 Entrega pronto</span>':'<span class="chip">⚪ Pendiente</span>'):s.grade==null?'<span class="chip info">🔵 Entregada · Esperando revisión</span>':(s.grade<5?'<span class="chip bad">🔴 Necesita corrección</span>':`<span class="chip ok">🟢 Calificada: ${s.grade}/10</span>`);
+  const s=t.sub,k=stOf(t),late=k==='pending'&&new Date(t.due)<new Date(),soon=k==='pending'&&!late&&new Date(t.due)-new Date()<1728e5;
+  const st={pending:late?'<span class="chip bad">🔴 Vencida (deadline pasado)</span>':soon?'<span class="chip warn">🟠 Entrega pronto</span>':'<span class="chip">⚪ Pendiente</span>',
+    sent:'<span class="chip info">🔵 Entregada · esperando revisión</span>',graded:`<span class="chip ok">🟢 Calificada: ${s?.grade}/10</span>`,fix:'<span class="chip warn">🟡 Necesita corrección</span>'}[k];
+  const fb=s&&(k==='graded'||k==='fix')?`<div class="fb ${k}"><b>${k==='fix'?'Correcciones solicitadas':`Evaluación · ${s.xp_awarded>0?'+':''}${s.xp_awarded??0} pts`}</b><p>${esc(s.feedback||'Sin comentarios')}</p></div>`:'';
+  const btns=te?`${s&&k!=='fix'?`<button class="btn sm" onclick="gradeForm(${t.id})">${k==='sent'?'✅ Evaluar y recompensar':'✏️ Re-evaluar'}</button>`:''}${k==='graded'?`<button class="btn ghost sm" onclick="act(()=>reopen(${t.id}))">↩️ Reabrir</button>`:''}<button class="btn ghost sm" onclick="taskForm(${t.id})">✏️ Editar</button><button class="btn ghost sm" onclick="ask('¿Eliminar asignación por completo?',()=>delTask(${t.id}))">🗑️</button>`
+    :k!=='graded'?`<button class="btn sm" onclick="submitForm(${t.id})">📤 ${k==='fix'?'Enviar corrección':s?'Volver a entregar':'Realizar entrega'}</button>`:'';
   return `<div class="card"><div class="row between"><h4>${esc(t.title)}</h4>${st}</div><div class="mu" style="margin-top:4px">📅 Deadline: ${fmt(t.due)} · 🎁 Recompensa: hasta ${t.max_xp} pts</div>${t.descr?`<p>${esc(t.descr)}</p>`:''}${files(t.files,false)}
-  ${s?`<div class="sub"><b>Entrega del alumno</b> · ${fmt(s.submitted_at)}${s.comment?`<p>${esc(s.comment)}</p>`:''}${files(s.files,false)}</div>`:''}
-  ${s&&s.grade!=null?`<div class="fb"><b>Evaluación · +${s.xp_awarded} pts sumados</b><p>${esc(s.feedback||'Sin comentarios')}</p></div>`:''}
-  <div class="row" style="margin-top:12px">${te?`${s?`<button class="btn sm" onclick="gradeForm(${t.id})">${s.grade==null?'✅ Evaluar y Recompensar':'✏️ Re-evaluar'}</button>`:''}${s&&s.grade!=null?`<button class="btn ghost sm" onclick="act(()=>reopen(${t.id}))">↩️ Reabrir ciclo</button>`:''}<button class="btn ghost sm" onclick="taskForm(${t.id})">✏️ Editar Asignación</button><button class="btn ghost sm" onclick="ask('¿Eliminar asignación por completo?',()=>delTask(${t.id}))">🗑️</button>`
-   :(!s||s.grade==null)?`<button class="btn sm" onclick="submitForm(${t.id})">📤 ${s?'Volver a entregar':'Realizar Entrega'}</button>`:''}</div></div>`;
+  ${s?`<div class="sub"><b>Entrega del alumno</b> · ${fmt(s.submitted_at)}${s.comment?`<p>${esc(s.comment)}</p>`:''}${files(s.files,false)}</div>`:''}${fb}
+  <div class="row" style="margin-top:12px">${btns}</div></div>`;
 }
 function tabTasks(D,te){
   const g=(l,f)=>{const a=D.tasks.filter(f);return a.length?`<h3>${l} (${a.length})</h3>`+a.map(t=>taskCard(t,te)).join(''):''};
-  return (te?`<button class="btn" onclick="taskForm()">+ Nueva Asignación</button>`:'')+g('Pendientes del alumno',t=>!t.sub)+g('Entregadas (Esperando tu revisión)',t=>t.sub&&t.sub.grade==null)+g('Ciclo completado (Calificadas)',t=>t.sub&&t.sub.grade!=null)+(D.tasks.length?'':'<div class="card mu" style="margin-top:12px">Aún no hay asignaciones en este módulo.</div>');
+  return (te?`<button class="btn" onclick="taskForm()">+ Nueva Asignación</button>`:'')+g('Necesitan corrección',t=>stOf(t)==='fix')+g('Pendientes',t=>stOf(t)==='pending')+g('Entregadas · en revisión',t=>stOf(t)==='sent')+g('Calificadas',t=>stOf(t)==='graded')+(D.tasks.length?'':'<div class="card mu" style="margin-top:12px">Aún no hay asignaciones en este módulo.</div>');
 }
 function taskForm(id){
   const t=id?S.D.tasks.find(x=>x.id===id):{max_xp:50};
-  modal(id?'Editar Asignación':'Crear Nueva Asignación',`<label>Título de la tarea<input name="title" required value="${esc(t.title)}"></label><label>Descripción e instrucciones<textarea name="descr">${esc(t.descr)}</textarea></label>
+  modal(id?'Editar Asignación':'Crear Nueva Asignación',`<label>Título de la tarea<input name="title" required value="${esc(t.title)}"></label><p class="mu" style="margin:4px 0">Incluye «simulacro» en el título para activar su bonus por nota alta.</p><label>Descripción e instrucciones<textarea name="descr">${esc(t.descr)}</textarea></label>
   <div class="row"><div style="flex:2"><label>Fecha límite (Deadline)<input type="datetime-local" name="due" required value="${t.due?loc(t.due):''}"></label></div><div style="flex:1"><label>Recompensa (Puntos)<input type="number" name="max_xp" min="0" value="${t.max_xp}"></label></div></div>
   <label>Archivos adjuntos (tus apuntes o ejercicios)<input type="file" name="files" multiple></label>${id?files(t.files,true):''}`,
   async f=>{const b={title:f.get('title'),descr:f.get('descr'),due:new Date(f.get('due')).toISOString(),max_xp:+f.get('max_xp')||0};let tid=id;
@@ -258,49 +287,71 @@ async function delTask(id){
 }
 function submitForm(id){modal('Realizar Entrega','<label>Comentario (opcional)<textarea name="comment"></textarea></label><label>Sube aquí tus archivos<input type="file" name="files" multiple></label>',async f=>{
   const t=S.D.tasks.find(x=>x.id===id);let s=t.sub;
-  if(s)ck(await sb.from('submissions').update({comment:f.get('comment')}).eq('id',s.id));
+  if(s)ck(await sb.from('submissions').update({comment:f.get('comment'),submitted_at:new Date().toISOString(),graded_at:null}).eq('id',s.id));
   else s=ck(await sb.from('submissions').insert({task_id:id,comment:f.get('comment')}).select().single());
   await upload(f.getAll('files'),S.me.id,'sub',s.id);toast('¡Entrega realizada con éxito! 🚀')},'Enviar para revisión')}
 function gradeForm(id){
-  const t=S.D.tasks.find(x=>x.id===id),s=t.sub;
-  modal('Evaluar y Recompensar',`<label>Calificación (0-10)<input type="number" name="grade" min="0" max="10" step="0.1" required value="${s.grade??''}"></label><label>Feedback para el alumno<textarea name="feedback">${esc(s.feedback)}</textarea></label>
-  <label>Bonus XP (Transaccional)<input type="number" name="bonus" value="0"></label><p class="mu">La economía suma: (Nota/10 × Puntos base) + Bonus puntualidad + Este extra.</p>`,
-  async f=>{const g=Math.max(0,Math.min(10,+f.get('grade'))),xp=Math.round(g/10*t.max_xp)+(new Date(s.submitted_at)<=new Date(t.due)?S.cfg.xp_on_time:0)+(parseInt(f.get('bonus'))||0);
-    ck(await sb.from('submissions').update({grade:g,feedback:f.get('feedback'),xp_awarded:xp,graded_at:new Date().toISOString()}).eq('id',s.id));
+  const t=S.D.tasks.find(x=>x.id===id),s=t.sub,C=S.cfg;
+  modal('Evaluar y recompensar',`<label>Resultado<select name="mode"><option value="grade">Calificar</option><option value="fix" ${s.graded_at&&s.grade==null?'selected':''}>Pedir corrección al alumno</option></select></label>
+  <label>Calificación (0-10)<input type="number" name="grade" min="0" max="10" step="0.1" value="${s.grade??''}"></label><label>Feedback para el alumno<textarea name="feedback">${esc(s.feedback)}</textarea></label>
+  <label>Ajuste manual de puntos (admite negativos)<input type="number" name="bonus" value="0"></label>
+  <label class="row" style="font-weight:500"><input type="checkbox" name="sim" style="width:auto" ${/simulacro/i.test(t.title)?'checked':''}> Es simulacro (+${C.xp_top} pts si la nota supera ${C.top_grade})</label>
+  <p class="mu">Puntos = nota/10 × recompensa, más bonus de plazo (anticipada ${C.early_h} h: +${C.xp_early}; puntual: +${C.xp_on_time}), simulacro y ajuste. Cada concepto queda en el historial.</p>`,
+  async f=>{
+    const fb=f.get('feedback'),now=new Date().toISOString();
+    if(f.get('mode')==='fix'){ck(await sb.from('submissions').update({grade:null,feedback:fb,xp_awarded:null,graded_at:now}).eq('id',s.id));ck(await sb.from('xp_log').delete().eq('ref','sub:'+s.id));return toast('Devuelta al alumno para corregir')}
+    if(f.get('grade')==='')throw new Error('Indica la calificación');
+    const g=Math.max(0,Math.min(10,+f.get('grade'))),hrs=(new Date(t.due)-new Date(s.submitted_at))/36e5,rows=[[Math.round(g/10*t.max_xp),'Tarea: '+t.title]];
+    if(hrs>=C.early_h)rows.push([C.xp_early,`Entrega anticipada (+${C.early_h} h)`]);else if(hrs>=0)rows.push([C.xp_on_time,'Entrega puntual']);else if(C.xp_late)rows.push([-C.xp_late,'Entrega fuera de plazo']);
+    if(f.get('sim')&&g>C.top_grade)rows.push([C.xp_top,`Simulacro con nota superior a ${C.top_grade}`]);
+    const b=parseInt(f.get('bonus'))||0;if(b)rows.push([b,'Ajuste del profesor: '+t.title]);
+    const tot=rows.reduce((a,r)=>a+r[0],0);
+    ck(await sb.from('submissions').update({grade:g,feedback:fb,xp_awarded:tot,graded_at:now}).eq('id',s.id));
     ck(await sb.from('xp_log').delete().eq('ref','sub:'+s.id));
-    ck(await sb.from('xp_log').insert({student_id:S.sid,amount:xp,reason:'Recompensa Tarea: '+t.title,ref:'sub:'+s.id}));
-    await checkBadges(S.sid);toast('Ciclo cerrado y puntos asignados')});
+    const ins=rows.filter(r=>r[0]).map(([amount,reason])=>({student_id:S.sid,amount,reason,ref:'sub:'+s.id}));if(ins.length)ck(await sb.from('xp_log').insert(ins));
+    await checkBadges(S.sid);toast(`Ciclo cerrado: ${tot>0?'+':''}${tot} pts`)});
 }
 async function reopen(id){const s=S.D.tasks.find(x=>x.id===id).sub;ck(await sb.from('submissions').update({grade:null,xp_awarded:null,graded_at:null}).eq('id',s.id));ck(await sb.from('xp_log').delete().eq('ref','sub:'+s.id))}
 
 // ---------- Buzón y Repositorio con Drag & Drop ----------
-function renderRepoTree(list, te){
-  const groups = {}; list.forEach(f=>{ const k=f.note||'General'; if(!groups[k])groups[k]=[]; groups[k].push(f); });
-  return Object.keys(groups).length ? Object.entries(groups).map(([k, files])=>`<h4 style="margin-top:16px">📁 ${esc(k)}</h4>`+files.map(f=>`<div class="card row between" style="padding:14px;margin-bottom:8px"><div>${window.files([f],false)}<div class="mu" style="margin-top:4px">${fmt(f.created_at)}</div></div>${te?`<button class="btn ghost sm" onclick="delFile(${f.id})">🗑️</button>`:''}</div>`).join('')) : '<div class="card mu">El repositorio está vacío</div>';
+function renderRepoTree(list,canDel,award){
+  const g={};list.forEach(f=>(g[f.note||'General']??=[]).push(f));const keys=Object.keys(g);
+  if(!keys.length)return'<div class="card mu">Todavía no hay archivos aquí. Arrastra uno para empezar.</div>';
+  return keys.map(k=>{const done=S.D.refs.has('up:'+k);
+    return `<details class="folder" open><summary>📁 ${esc(k)} <span class="mu">(${g[k].length})</span> ${done?`<span class="chip ok">+${S.cfg.xp_notes} pts concedidos</span>`:''}</summary>${g[k].map(f=>`<div class="card row between" style="padding:12px 16px;margin:8px 0"><div>${files([f],false)}<div class="mu">${fmt(f.created_at)}</div></div>${canDel?`<button class="btn ghost sm" onclick="delFile(${f.id})">🗑️</button>`:''}</div>`).join('')}${award&&!done&&k!=='General'?`<button class="btn sm" onclick="act(()=>awardNotes('${encodeURIComponent(k).replace(/'/g,'%27')}'),'Puntos concedidos')">⭐ Premiar apuntes ordenados (+${S.cfg.xp_notes})</button>`:''}</details>`}).join('');
 }
+async function awardNotes(k){k=decodeURIComponent(k);
+  if(ck(await sb.from('xp_log').select('id').eq('student_id',S.sid).eq('ref','up:'+k)).length)return;
+  ck(await sb.from('xp_log').insert({student_id:S.sid,amount:S.cfg.xp_notes,reason:'Apuntes ordenados: '+k,ref:'up:'+k}));await checkBadges(S.sid)}
 function tabDocs(D,te){
   const dz = te?`<div class="dz" data-type="doc" onclick="document.getElementById('docInp').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="hDrop(event)">
         <i>📚</i><b>Arrastra los documentos del curso aquí</b><p class="mu">o haz clic para seleccionar. Nutre el repositorio del alumno.</p>
         <input type="file" id="docInp" multiple style="display:none" onchange="if(this.files.length) promptUpload(this.files, true)">
       </div>`:'';
-  return dz + `<h3>Repositorio Personal de Clase (Árbol de carpetas)</h3>` + renderRepoTree(D.docs, te).join('');
+  return dz + `<h3>Repositorio Personal de Clase (Árbol de carpetas)</h3>` + renderRepoTree(D.docs,te,false);
 }
 function tabUploads(D,te){
   const dz = te?'':`<div class="dz" data-type="upload" onclick="document.getElementById('fileInp').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="hDrop(event)">
         <i>📥</i><b>Arrastra tus archivos aquí para enviarlos</b><p class="mu">Fotos de exámenes, apuntes del cole o ejercicios (PDF, JPG, PNG, DOCX)</p>
         <input type="file" id="fileInp" multiple accept=".pdf,.jpg,.jpeg,.png,.docx,.doc" style="display:none" onchange="if(this.files.length) promptUpload(this.files, false)">
       </div>`;
-  return dz + `<h3>${te?'Buzón de archivos del alumno':'Mis envíos directos'}</h3>` + renderRepoTree(D.uploads, true).join('');
+  return dz + `<h3>${te?'Buzón de archivos del alumno':'Mis envíos directos'}</h3>` + renderRepoTree(D.uploads,true,te);
 }
 
 // ---------- Gamificación y Economía ----------
 function tabAch(D,te){
   return (te?`<div class="row"><button class="btn" onclick="xpForm()">± Operación manual de puntos</button><span class="mu">Pulsa una insignia para concederla/retirarla a dedo</span></div>`:'')+
   `<h3>Refuerzo Psicológico y Progreso</h3>
-  <div class="card stat" style="margin-bottom:20px;padding:24px"><div class="ic">🎯</div><div><b>Nivel actual: ${D.level} (${TITLES[Math.min(D.level-1,TITLES.length-1)]})</b><span class="mu">Faltan ${D.step - (D.xp % D.step)} puntos para desbloquear el Nivel ${D.level+1}. ¡Sigue así!</span></div></div>
-  <h3>Vitrina de Insignias</h3><div class="badges">${D.badges.map(b=>`<div class="card badge ${b.earned?'':'off'} ${te?'click':''}" ${te?`onclick="act(()=>toggleBadge(${b.id},${b.earned}))"`:''} title="${esc(b.descr)}"><div class="i">${esc(b.icon)}</div><b>${esc(b.name)}</b><div class="mu">${esc(b.descr)}</div></div>`).join('')}</div>
+  <div class="card stat" style="margin-bottom:20px;padding:24px"><div class="ic">🎯</div><div><b>Nivel actual: ${D.level} (${TITLES[Math.min(D.level-1,TITLES.length-1)]})</b><span class="mu">Faltan ${D.step-Math.max(0,D.xp)%D.step} puntos para desbloquear el Nivel ${D.level+1}. ¡Sigue así!</span></div></div>
+  ${progChart(D)}<h3>Recompensas por nivel</h3>${rewardsHTML(D)}<h3>Vitrina de Insignias</h3><div class="badges">${D.badges.map(b=>`<div class="card badge ${b.earned?'':'off'} ${te?'click':''}" ${te?`onclick="act(()=>toggleBadge(${b.id},${b.earned}))"`:''} title="${esc(b.descr)}"><div class="i">${esc(b.icon)}</div><b>${esc(b.name)}</b><div class="mu">${esc(b.descr)}</div></div>`).join('')}</div>
   <h3>Historial de Transacciones (Feed)</h3><div class="card" style="padding:0">${D.log.map(l=>`<div class="log"><span style="display:flex;align-items:center;gap:12px;font-size:15px">${l.amount>0?'<div class="ic" style="background:#16a34a22;padding:8px;border-radius:10px">📈</div>':'<div class="ic" style="background:#ef444422;padding:8px;border-radius:10px">📉</div>'} <div><b>${esc(l.reason)}</b><br><span class="mu">${fmt(l.created_at)}</span></div></span><span class="${l.amount>=0?'pos':'neg'}">${l.amount>0?'+':''}${l.amount} pts</span></div>`).join('')||'<div style="padding:22px" class="mu">Sin transacciones en la economía</div>'}</div>`;
 }
+const rewardsHTML=D=>{const r=[...(S.cfg.rewards||[])].sort((a,b)=>a.level-b.level);
+  return r.length?r.map(x=>{const on=D.level>=x.level;return `<div class="card row between" style="${on?'':'opacity:.5'}"><span>🎁 <b>Nivel ${x.level}</b> · ${esc(x.text)}</span><span class="chip ${on?'ok':''}">${on?'Desbloqueada':'Bloqueada'}</span></div>`}).join(''):'<div class="card mu">Aún no hay recompensas configuradas.</div>'};
+function progChart(D){
+  const a=[...(D.logAll||[])].sort((x,y)=>x.created_at>y.created_at?1:-1);if(a.length<2)return'';
+  let c=0;const p=a.map(l=>c+=l.amount),mx=Math.max(...p,1),mn=Math.min(...p,0),W=600,H=140,xy=p.map((v,i)=>`${(i/(p.length-1)*W).toFixed(1)},${(H-(v-mn)/(mx-mn||1)*H+5).toFixed(1)}`).join(' ');
+  return `<h3>Evolución histórica de puntos</h3><div class="card"><svg viewBox="0 0 ${W} ${H+10}" style="width:100%;height:auto" role="img" aria-label="Evolución de puntos"><polyline points="${xy}" fill="none" stroke="var(--ac)" stroke-width="3" stroke-linejoin="round"/></svg><div class="row between mu"><span>${fmt(a[0].created_at)}</span><span>${fmt(a[a.length-1].created_at)} · ${c} pts</span></div></div>`}
 async function toggleBadge(bid,has){ck(has?await sb.from('student_badges').delete().eq('student_id',S.sid).eq('badge_id',bid):await sb.from('student_badges').insert({student_id:S.sid,badge_id:bid}))}
 const xpForm=(uid)=>{
   const t_uid = uid || S.sid;
@@ -310,16 +361,35 @@ const xpForm=(uid)=>{
 
 // ---------- Ajustes Globales (Admin) ----------
 async function tSettings(){
-  const bs=ck(await sb.from('badges').select('*').order('id'));S.badges=bs;const c=S.cfg;
+  const bs=ck(await sb.from('badges').select('*').order('id'));S.badges=bs;const c=S.cfg,stg=await storageStats();
   return `<h1>Ajustes del Sistema</h1><form class="card" onsubmit="saveCfg(event)"><h4>Plataforma y Motor de Gamificación</h4>
   <label>Nombre de la plataforma<input name="name" value="${esc(c.name)}"></label>
-  <div class="row"><div style="flex:1"><label>Color principal (Branding)<input type="color" name="accent" value="${c.accent}"></label></div><div style="flex:1"><label>Bonus XP por entrega puntual<input type="number" name="xp_on_time" value="${c.xp_on_time}"></label></div><div style="flex:1"><label>Puntos requeridos por nivel<input type="number" name="level_step" min="10" value="${c.level_step}"></label></div></div><button class="btn wide">Aplicar configuraciones</button></form>
+  <div class="row"><div style="flex:1"><label>Color principal (Branding)<input type="color" name="accent" value="${c.accent}"></label></div><div style="flex:1"><label>Bonus XP por entrega puntual<input type="number" name="xp_on_time" value="${c.xp_on_time}"></label></div><div style="flex:1"><label>Puntos requeridos por nivel<input type="number" name="level_step" min="10" value="${c.level_step}"></label></div></div><h4 style="margin-top:22px">Economía de puntos</h4><div class="row">
+  <div style="flex:1"><label>Entrega anticipada (pts)<input type="number" name="xp_early" value="${c.xp_early}"></label></div><div style="flex:1"><label>Horas de antelación<input type="number" name="early_h" min="1" value="${c.early_h}"></label></div>
+  <div style="flex:1"><label>Simulacro (pts)<input type="number" name="xp_top" value="${c.xp_top}"></label></div><div style="flex:1"><label>Simulacro: nota mayor que<input type="number" name="top_grade" step="0.1" value="${c.top_grade}"></label></div>
+  <div style="flex:1"><label>Apuntes ordenados (pts)<input type="number" name="xp_notes" value="${c.xp_notes}"></label></div><div style="flex:1"><label>Penalización por retraso<input type="number" name="xp_late" min="0" value="${c.xp_late}"></label></div></div>
+  <label>Cuota de almacenamiento (MB)<input type="number" name="quota_mb" min="1" value="${c.quota_mb}"></label><button class="btn wide">Aplicar configuraciones</button></form>
+  <div class="row between"><h3>Recompensas por nivel</h3><button class="btn sm" onclick="rewardForm()">+ Nueva recompensa</button></div>
+  ${c.rewards.map((r,i)=>({...r,i})).sort((a,b)=>a.level-b.level).map(r=>`<div class="card row between"><span>🎁 <b>Nivel ${r.level}</b> · ${esc(r.text)}</span><span class="row"><button class="btn ghost sm" onclick="rewardForm(${r.i})">✏️</button><button class="btn ghost sm" onclick="delReward(${r.i})">🗑️</button></span></div>`).join('')||'<div class="card mu">Sin recompensas. Ejemplo: nivel 3 · elegir el tema de la próxima clase.</div>'}
+  ${stg}
   <div class="row between"><h3>Configurador de Insignias</h3><button class="btn sm" onclick="badgeForm()">+ Nueva insignia</button></div>
   ${bs.map(b=>`<div class="card row between"><div><span style="font-size:28px">${esc(b.icon)}</span> <b style="font-size:16px">${esc(b.name)}</b> <span class="mu">${esc(b.descr)} · Condición: ${RULES[b.rule]}${b.rule!=='manual'?' '+b.value:''}</span></div><div class="row"><button class="btn ghost sm" onclick="badgeForm(${b.id})">✏️</button><button class="btn ghost sm" onclick="ask('¿Eliminar insignia de la base de datos?',async()=>ck(await sb.from('badges').delete().eq('id',${b.id})))">🗑️</button></div></div>`).join('')}`;
 }
+async function storageStats(){
+  try{const st=ck(await sb.from('profiles').select('id,name').eq('role','student')),rows=[];
+    for(const u of st){const l=(await sb.storage.from('archivos').list(u.id,{limit:1000})).data||[];rows.push({name:u.name,n:l.length,b:l.reduce((a,o)=>a+(o.metadata?.size||0),0)})}
+    const tot=rows.reduce((a,r)=>a+r.b,0),q=(S.cfg.quota_mb||1000)*1048576,pc=tot/q*100;
+    return `<h3>Gestión de almacenamiento</h3><div class="card"><div class="row between"><b>${(tot/1048576).toFixed(1)} MB de ${S.cfg.quota_mb} MB</b><span class="chip ${pc>80?'bad':'ok'}">${Math.round(pc)}%</span></div><div class="bar" style="margin:10px 0"><i style="width:${Math.min(100,pc)}%"></i></div><p class="mu">Las imágenes se comprimen al subir (máx. 1600 px). Límite por archivo: ${MAX_MB} MB.</p>${rows.sort((a,b)=>b.b-a.b).map(r=>`<div class="log"><span>${esc(r.name)} <span class="mu">· ${r.n} archivos</span></span><b>${(r.b/1048576).toFixed(1)} MB</b></div>`).join('')}</div>`}
+  catch(e){return''}
+}
+const saveRewards=async l=>{ck(await sb.from('settings').upsert({key:'rewards',value:JSON.stringify(l)}));S.cfg.rewards=l};
+function rewardForm(i){const r=i!=null?S.cfg.rewards[i]:{level:2,text:''};
+  modal(i!=null?'Editar recompensa':'Nueva recompensa',`<label>Se desbloquea en el nivel<input type="number" name="level" min="2" required value="${r.level}"></label><label>Recompensa<input name="text" required value="${esc(r.text)}" placeholder="Ej: 10 minutos de descanso extra"></label>`,
+  async f=>{const l=[...S.cfg.rewards],n={level:+f.get('level'),text:f.get('text').trim()};if(i!=null)l[i]=n;else l.push(n);await saveRewards(l)})}
+const delReward=i=>ask('¿Eliminar recompensa?',()=>saveRewards(S.cfg.rewards.filter((_,j)=>j!==i)));
 async function saveCfg(e){e.preventDefault();try{const o=Object.fromEntries(new FormData(e.target));
   ck(await sb.from('settings').upsert(Object.entries(o).map(([key,value])=>({key,value:String(value)}))));
-  Object.assign(S.cfg,{name:o.name,accent:o.accent,xp_on_time:+o.xp_on_time,level_step:+o.level_step||100});applyCfg();toast('Configuración global aplicada');render()}catch(x){toast(x.message)}}
+  Object.entries(o).forEach(([k,v])=>S.cfg[k]=['name','accent'].includes(k)?v:(+v||0));S.cfg.level_step=S.cfg.level_step||100;applyCfg();toast('Configuración global aplicada');render()}catch(x){toast(x.message)}}
 function badgeForm(id){
   const b=id?S.badges.find(x=>x.id===id):{icon:'🏅',rule:'manual',value:1};
   modal(id?'Editar insignia':'Crear insignia',`<div class="row"><div style="width:90px"><label>Icono<input name="icon" maxlength="4" value="${esc(b.icon)}"></label></div><div style="flex:1"><label>Nombre del logro<input name="name" required value="${esc(b.name)}"></label></div></div>
